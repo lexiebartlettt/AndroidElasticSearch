@@ -1,7 +1,10 @@
 package ca.ualberta.ssrg.movies;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.http.client.ClientProtocolException;
 
 import android.app.Activity;
 import android.content.Context;
@@ -88,6 +91,9 @@ public class MainActivity extends Activity {
 		// Refresh the list when visible
 		// TODO: Search all
 		
+		movies.clear();
+		Thread thread = new SearchThread(""); 
+		thread.start();
 	}
 
 	/** 
@@ -96,7 +102,10 @@ public class MainActivity extends Activity {
 	 */
 	public void search(View view) {
 		movies.clear();
-
+		EditText editText= (EditText)findViewById(R.id.editText1);
+		String searchQuery = editText.toString();
+		Thread thread = new SearchThread(searchQuery);
+		thread.start();
 		// TODO: Extract search query from text view
 		
 		// TODO: Run the search thread
@@ -126,7 +135,25 @@ public class MainActivity extends Activity {
 
 	class SearchThread extends Thread {
 		// TODO: Implement search thread
+		private String search; 
 		
+		public SearchThread(String s){
+			search = s;
+		}
+		public void run(){ 
+			movies.clear();
+			try {
+				movies.addAll(movieManager.searchMovies(search,null));
+			} catch (ClientProtocolException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			runOnUiThread(doUpdateGUIList);
+		}
 	}
 
 	

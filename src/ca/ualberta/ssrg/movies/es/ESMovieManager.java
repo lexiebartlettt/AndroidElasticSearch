@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -28,6 +29,7 @@ import com.google.gson.reflect.TypeToken;
 public class ESMovieManager implements IMovieManager {
 
 	private static final String SEARCH_URL = "http://cmput301.softwareprocess.es:8080/testing/movie/_search";
+	//change this one for ours 
 	private static final String RESOURCE_URL = "http://cmput301.softwareprocess.es:8080/testing/movie/";
 	private static final String TAG = "MovieSearch";
 
@@ -64,12 +66,40 @@ public class ESMovieManager implements IMovieManager {
 	/**
 	 * Get movies with the specified search string. If the search does not
 	 * specify fields, it searches on all the fields.
+	 * @throws IOException 
+	 * @throws ClientProtocolException 
 	 */
-	public List<Movie> searchMovies(String searchString, String field) {
+	public List<Movie> searchMovies(String searchString, String field) throws ClientProtocolException, IOException {
 		List<Movie> result = new ArrayList<Movie>();
 
 		// TODO: Implement search movies using ElasticSearch
+		if ("".equals(searchString)||searchString==null){
+			searchString= "*";
+		}
+		HttpClient httpClient = new DefaultHttpClient();
 		
+		try{
+		HttpPost searchRequest = createSearchRequest(searchString, field);
+		HttpResponse response = httpClient.execute(searchRequest);
+	
+		String status = response.getStatusLine().toString();
+		Log.i(TAG, status);
+		
+		SearchResponse<Movie> esResponse = parseSearchResponse(response);
+		
+		Hits<Movie> hits = esResponse.getHits();
+		
+		if(hits != null){
+			if (hits.getHits() != null ){
+				//there are movies in the search 
+				for(SearchHit<Movie> sesr: hits.getHits()){
+					result.add(sesr.getSource());
+				}
+			}
+		}
+		} catch (UnsupportedEncodingException e){
+			e.printStackTrace();
+		}
 		return result;
 	}
 
